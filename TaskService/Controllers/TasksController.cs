@@ -9,16 +9,14 @@ using TaskService.DAL;
 
 namespace TaskService.Controllers
 {
-    [Authorize]
+    // TODO: Secure the actions in this controller
     public class TasksController : ApiController
     {
         private TasksServiceContext db = new TasksServiceContext();
 
         public IEnumerable<Models.Task> Get()
         {
-            string owner = ClaimsPrincipal.Current.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier").Value;
-            IEnumerable<Models.Task> userTasks = db.Tasks.Where(t => t.owner == owner);
-            return userTasks;
+            // TODO: Use claims to get the tasks for the calling user.
         }
 
         public void Post(Models.Task task)
