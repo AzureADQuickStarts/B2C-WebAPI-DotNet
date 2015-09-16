@@ -21,13 +21,6 @@ namespace TaskService.Controllers
             return userTasks;
         }
 
-        //// GET api/values/5
-        //public string Get(int id)
-        //{
-        //    return "value";
-        //}
-
-        // POST api/values
         public void Post(Models.Task task)
         {
             if (task.task == null || task.task == string.Empty)
@@ -41,10 +34,12 @@ namespace TaskService.Controllers
             db.SaveChanges();
         }
 
-        // DELETE api/values/5
         public void Delete(int id)
         {
-
+            string owner = ClaimsPrincipal.Current.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier").Value;
+            Models.Task task = db.Tasks.Where(t => t.owner.Equals(owner) && t.TaskID.Equals(id)).FirstOrDefault();
+            db.Tasks.Remove(task);
+            db.SaveChanges();
         }
     }
 }

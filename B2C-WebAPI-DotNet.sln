@@ -12,7 +12,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{84AE09
 		.nuget\NuGet.targets = .nuget\NuGet.targets
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskClient", "TaskClient\TaskClient.csproj", "{005E6BB1-F422-4366-B548-1BDE150F0073}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TaskWebApp", "TaskWebApp\TaskWebApp.csproj", "{07D1C353-4626-4D20-A804-531517BCF3F5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -24,10 +24,10 @@ Global
 		{FEBD0A38-D884-403D-89C5-1FEFE80BB550}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FEBD0A38-D884-403D-89C5-1FEFE80BB550}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FEBD0A38-D884-403D-89C5-1FEFE80BB550}.Release|Any CPU.Build.0 = Release|Any CPU
-		{005E6BB1-F422-4366-B548-1BDE150F0073}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{005E6BB1-F422-4366-B548-1BDE150F0073}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{005E6BB1-F422-4366-B548-1BDE150F0073}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{005E6BB1-F422-4366-B548-1BDE150F0073}.Release|Any CPU.Build.0 = Release|Any CPU
+		{07D1C353-4626-4D20-A804-531517BCF3F5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{07D1C353-4626-4D20-A804-531517BCF3F5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{07D1C353-4626-4D20-A804-531517BCF3F5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{07D1C353-4626-4D20-A804-531517BCF3F5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
