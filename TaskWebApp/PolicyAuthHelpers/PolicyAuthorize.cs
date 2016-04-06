@@ -26,6 +26,7 @@ namespace TaskWebApp.Policies
                     {
                         RedirectUri = "/",
                     }, OpenIdConnectAuthenticationDefaults.AuthenticationType);
+	    base.HandleUnauthorizedRequest(filterContext);
         }
     }
 }
