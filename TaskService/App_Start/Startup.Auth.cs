@@ -24,7 +24,17 @@ namespace TaskService
 
         public void ConfigureAuth(IAppBuilder app)
         {   
-            // TODO: Configure the OWIN OAuth Pipeline
+            TokenValidationParameters tvps = new TokenValidationParameters
+            {
+                // This is where you specify that your API only accepts tokens from its own clients
+                ValidAudience = clientId,
+            };
+
+            app.UseOAuthBearerAuthentication(new OAuthBearerAuthenticationOptions
+            {   
+                // This SecurityTokenProvider fetches the Azure AD B2C metadata & signing keys from the OpenIDConnect metadata endpoint
+                AccessTokenFormat = new JwtFormat(tvps, new OpenIdConnectCachingSecurityTokenProvider(String.Format(aadInstance, tenant, "v2.0", discoverySuffix, commonPolicy)))
+            });
         }
     }
 }
