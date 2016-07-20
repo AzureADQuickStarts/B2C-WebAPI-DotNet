@@ -41,7 +41,7 @@ namespace TaskService
             return new OAuthBearerAuthenticationOptions
             {
                 // This SecurityTokenProvider fetches the Azure AD B2C metadata & signing keys from the OpenIDConnect metadata endpoint
-                AccessTokenFormat = new JwtFormat(tvps, new OpenIdConnectCachingSecurityTokenProvider(String.Format(aadInstance, tenant, signUpPolicy))),
+                AccessTokenFormat = new JwtFormat(tvps, new OpenIdConnectCachingSecurityTokenProvider(String.Format(aadInstance, tenant, policy))),
                 AuthenticationType = policy,
             };
         }
