@@ -8,7 +8,7 @@ using System.Web.Http;
 
 namespace TaskService.Controllers
 {
-    [Authorize]
+    // TODO: Secure this controller with OAuth authentication
     public class TasksController : ApiController
     {
         // In this service we're using an in-memory list to store tasks, just to keep things simple.
@@ -17,7 +17,8 @@ namespace TaskService.Controllers
 
         public IEnumerable<Models.Task> Get()
         {
-            string owner = ClaimsPrincipal.Current.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier").Value;
+            // TODO: Get user information (their Id) from the processed authentication
+
             IEnumerable<Models.Task> userTasks = db.Where(t => t.Owner == owner);
             return userTasks;
         }

@@ -25,25 +25,12 @@ namespace TaskService
 
         public void ConfigureAuth(IAppBuilder app)
         {   
-            app.UseOAuthBearerAuthentication(CreateBearerOptionsFromPolicy(signUpPolicy));
-            app.UseOAuthBearerAuthentication(CreateBearerOptionsFromPolicy(signInPolicy));
-            app.UseOAuthBearerAuthentication(CreateBearerOptionsFromPolicy(editProfilePolicy));
+            // TODO: Configure OAuth authentication for the service
         }
 
         public OAuthBearerAuthenticationOptions CreateBearerOptionsFromPolicy(string policy)
         {
-            TokenValidationParameters tvps = new TokenValidationParameters
-            {
-                // This is where you specify that your API only accepts tokens from its own clients
-                ValidAudience = clientId,
-            };
-
-            return new OAuthBearerAuthenticationOptions
-            {
-                // This SecurityTokenProvider fetches the Azure AD B2C metadata & signing keys from the OpenIDConnect metadata endpoint
-                AccessTokenFormat = new JwtFormat(tvps, new OpenIdConnectCachingSecurityTokenProvider(String.Format(aadInstance, tenant, signUpPolicy))),
-                AuthenticationType = policy,
-            };
+            // TODO: Create OAuthBearerAuthenticationOptions for each policy
         }
     }
 }
