@@ -27,8 +27,8 @@
             <td>
                 @using (Html.BeginForm("Delete", "Tasks", FormMethod.Post))
                 {
-                    @item["task"]
-                    <button name="id" value="@item["TaskID"]" style="float:right">Delete</button>
+                    @item["Text"]
+                    <button name="id" value="@item["Id"]" style="float:right">Delete</button>
                 }
             </td>
         </tr>

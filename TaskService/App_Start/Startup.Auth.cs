@@ -19,12 +19,18 @@ namespace TaskService
         public static string aadInstance = ConfigurationManager.AppSettings["ida:AadInstance"];
         public static string tenant = ConfigurationManager.AppSettings["ida:Tenant"];
         public static string clientId = ConfigurationManager.AppSettings["ida:ClientId"];
-        public static string commonPolicy = ConfigurationManager.AppSettings["ida:PolicyId"];
-        private const string discoverySuffix = ".well-known/openid-configuration";
+        public static string signUpPolicy = ConfigurationManager.AppSettings["ida:SignUpPolicyId"];
+        public static string signInPolicy = ConfigurationManager.AppSettings["ida:SignInPolicyId"];
+        public static string editProfilePolicy = ConfigurationManager.AppSettings["ida:UserProfilePolicyId"];
 
         public void ConfigureAuth(IAppBuilder app)
         {   
-            // TODO: Configure the OWIN OAuth Pipeline
+            // TODO: Configure OAuth authentication for the service
+        }
+
+        public OAuthBearerAuthenticationOptions CreateBearerOptionsFromPolicy(string policy)
+        {
+            // TODO: Create OAuthBearerAuthenticationOptions for each policy
         }
     }
 }
