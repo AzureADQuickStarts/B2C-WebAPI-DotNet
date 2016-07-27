@@ -5,41 +5,40 @@ using System.Net;
 using System.Net.Http;
 using System.Security.Claims;
 using System.Web.Http;
-using TaskService.DAL;
 
 namespace TaskService.Controllers
 {
     [Authorize]
     public class TasksController : ApiController
     {
-        private TasksServiceContext db = new TasksServiceContext();
+        // In this service we're using an in-memory list to store tasks, just to keep things simple.
+        // This means that all of your tasks will be lost each time you run the service
+        private static List<Models.Task> db = new List<Models.Task>();
 
         public IEnumerable<Models.Task> Get()
         {
             string owner = ClaimsPrincipal.Current.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier").Value;
-            IEnumerable<Models.Task> userTasks = db.Tasks.Where(t => t.owner == owner);
+            IEnumerable<Models.Task> userTasks = db.Where(t => t.Owner == owner);
             return userTasks;
         }
 
         public void Post(Models.Task task)
         {
-            if (task.task == null || task.task == string.Empty)
+            if (task.Text == null || task.Text == string.Empty)
                 throw new WebException("Please provide a task description");
 
             string owner = ClaimsPrincipal.Current.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier").Value;
-            task.owner = owner;
-            task.completed = false;
-            task.date = DateTime.UtcNow;
-            db.Tasks.Add(task);
-            db.SaveChanges();
+            task.Owner = owner;
+            task.Completed = false;
+            task.DateModified = DateTime.UtcNow;
+            db.Add(task);
         }
 
         public void Delete(int id)
         {
             string owner = ClaimsPrincipal.Current.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier").Value;
-            Models.Task task = db.Tasks.Where(t => t.owner.Equals(owner) && t.TaskID.Equals(id)).FirstOrDefault();
-            db.Tasks.Remove(task);
-            db.SaveChanges();
+            Models.Task task = db.Where(t => t.Owner.Equals(owner) && t.Id.Equals(id)).FirstOrDefault();
+            db.Remove(task);
         }
     }
 }

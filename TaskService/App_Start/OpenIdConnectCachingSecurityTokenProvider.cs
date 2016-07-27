@@ -82,7 +82,7 @@ namespace TaskService.App_Start
             _synclock.EnterWriteLock();
             try
             {
-                OpenIdConnectConfiguration config = _configManager.GetConfigurationAsync().Result;
+                OpenIdConnectConfiguration config = Task.Run(_configManager.GetConfigurationAsync).Result;
                 _issuer = config.Issuer;
                 _tokens = config.SigningTokens;
             }
