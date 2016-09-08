@@ -21,8 +21,6 @@ namespace TaskService.App_Start
         private IEnumerable<SecurityToken> _tokens;
         private readonly string _metadataEndpoint;
 
-        private readonly ReaderWriterLockSlim _synclock = new ReaderWriterLockSlim();
-
         public OpenIdConnectCachingSecurityTokenProvider(string metadataEndpoint)
         {
             _metadataEndpoint = metadataEndpoint;
@@ -41,16 +39,7 @@ namespace TaskService.App_Start
         {
             get
             {
-                RetrieveMetadata();
-                _synclock.EnterReadLock();
-                try
-                {
-                    return _issuer;
-                }
-                finally
-                {
-                    _synclock.ExitReadLock();
-                }
+                return _issuer;
             }
         }
 
@@ -64,32 +53,17 @@ namespace TaskService.App_Start
         {
             get
             {
-                RetrieveMetadata();
-                _synclock.EnterReadLock();
-                try
-                {
-                    return _tokens;
-                }
-                finally
-                {
-                    _synclock.ExitReadLock();
-                }
+                return _tokens;
             }
         }
 
-        private void RetrieveMetadata()
+        private async Task<OpenIdConnectConfiguration> RetrieveMetadata()
         {
-            _synclock.EnterWriteLock();
-            try
-            {
-                OpenIdConnectConfiguration config = Task.Run(_configManager.GetConfigurationAsync).Result;
-                _issuer = config.Issuer;
-                _tokens = config.SigningTokens;
-            }
-            finally
-            {
-                _synclock.ExitWriteLock();
-            }
+            OpenIdConnectConfiguration config = await _configManager.GetConfigurationAsync();
+            _issuer = config.Issuer;
+            _tokens = config.SigningTokens;
+
+            return config;
         }
     }
 }
