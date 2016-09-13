@@ -1,14 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Owin.Security.Jwt;
-using Microsoft.Owin.Security;
-using System.Net.Http;
 using System.IdentityModel.Tokens;
 using Microsoft.IdentityModel.Protocols;
-using System.Threading;
+using System.Net.Http;
 
 namespace TaskService.App_Start
 {
@@ -17,16 +13,11 @@ namespace TaskService.App_Start
     public class OpenIdConnectCachingSecurityTokenProvider : IIssuerSecurityTokenProvider
     {
         public ConfigurationManager<OpenIdConnectConfiguration> _configManager;
-        private string _issuer;
-        private IEnumerable<SecurityToken> _tokens;
-        private readonly string _metadataEndpoint;
-
-        private readonly ReaderWriterLockSlim _synclock = new ReaderWriterLockSlim();
 
         public OpenIdConnectCachingSecurityTokenProvider(string metadataEndpoint)
         {
-            _metadataEndpoint = metadataEndpoint;
-            _configManager = new ConfigurationManager<OpenIdConnectConfiguration>(metadataEndpoint);
+            HttpClient httpClient = new HttpClient();
+            _configManager = new ConfigurationManager<OpenIdConnectConfiguration>(metadataEndpoint, httpClient);
 
             RetrieveMetadata();
         }
@@ -41,16 +32,7 @@ namespace TaskService.App_Start
         {
             get
             {
-                RetrieveMetadata();
-                _synclock.EnterReadLock();
-                try
-                {
-                    return _issuer;
-                }
-                finally
-                {
-                    _synclock.ExitReadLock();
-                }
+                return RetrieveMetadata().GetAwaiter().GetResult().Issuer;
             }
         }
 
@@ -64,32 +46,15 @@ namespace TaskService.App_Start
         {
             get
             {
-                RetrieveMetadata();
-                _synclock.EnterReadLock();
-                try
-                {
-                    return _tokens;
-                }
-                finally
-                {
-                    _synclock.ExitReadLock();
-                }
+                return RetrieveMetadata().GetAwaiter().GetResult().SigningTokens;
             }
         }
 
-        private void RetrieveMetadata()
+        private async Task<OpenIdConnectConfiguration> RetrieveMetadata()
         {
-            _synclock.EnterWriteLock();
-            try
-            {
-                OpenIdConnectConfiguration config = Task.Run(_configManager.GetConfigurationAsync).Result;
-                _issuer = config.Issuer;
-                _tokens = config.SigningTokens;
-            }
-            finally
-            {
-                _synclock.ExitWriteLock();
-            }
+            OpenIdConnectConfiguration config = await _configManager.GetConfigurationAsync();
+
+            return config;
         }
     }
 }
