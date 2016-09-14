@@ -32,7 +32,7 @@ namespace TaskService.App_Start
         {
             get
             {
-                return RetrieveMetadata().GetAwaiter().GetResult().Issuer;
+                return RetrieveMetadata().Result.Issuer;
             }
         }
 
@@ -46,7 +46,7 @@ namespace TaskService.App_Start
         {
             get
             {
-                return RetrieveMetadata().GetAwaiter().GetResult().SigningTokens;
+                return RetrieveMetadata().Result.SigningTokens;
             }
         }
 
