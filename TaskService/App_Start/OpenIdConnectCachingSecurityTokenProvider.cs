@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
-using Microsoft.Owin.Security.Jwt;
-using System.IdentityModel.Tokens;
 using Microsoft.IdentityModel.Protocols;
+using System.IdentityModel.Tokens;
+using Microsoft.Owin.Security.Jwt;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace TaskService.App_Start
 {
@@ -18,7 +18,6 @@ namespace TaskService.App_Start
         private readonly string _metadataEndpoint;
 
         private readonly ReaderWriterLockSlim _synclock = new ReaderWriterLockSlim();
-
 
         public OpenIdConnectCachingSecurityTokenProvider(string metadataEndpoint)
         {
@@ -48,7 +47,7 @@ namespace TaskService.App_Start
                 {
                     _synclock.ExitReadLock();
                 }
-             }
+            }
         }
 
         /// <summary>
@@ -71,7 +70,7 @@ namespace TaskService.App_Start
                 {
                     _synclock.ExitReadLock();
                 }
-             }
+            }
         }
 
         private void RetrieveMetadata()
