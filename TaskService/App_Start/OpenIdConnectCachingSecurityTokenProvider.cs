@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.Owin.Security.Jwt;
 using System.IdentityModel.Tokens;
 using Microsoft.IdentityModel.Protocols;
-using System.Net.Http;
+using System.Threading;
 
 namespace TaskService.App_Start
 {
@@ -13,11 +13,17 @@ namespace TaskService.App_Start
     public class OpenIdConnectCachingSecurityTokenProvider : IIssuerSecurityTokenProvider
     {
         public ConfigurationManager<OpenIdConnectConfiguration> _configManager;
+        private string _issuer;
+        private IEnumerable<SecurityToken> _tokens;
+        private readonly string _metadataEndpoint;
+
+        private readonly ReaderWriterLockSlim _synclock = new ReaderWriterLockSlim();
+
 
         public OpenIdConnectCachingSecurityTokenProvider(string metadataEndpoint)
         {
-            HttpClient httpClient = new HttpClient();
-            _configManager = new ConfigurationManager<OpenIdConnectConfiguration>(metadataEndpoint, httpClient);
+            _metadataEndpoint = metadataEndpoint;
+            _configManager = new ConfigurationManager<OpenIdConnectConfiguration>(metadataEndpoint);
 
             RetrieveMetadata();
         }
@@ -32,8 +38,17 @@ namespace TaskService.App_Start
         {
             get
             {
-                return RetrieveMetadata().Result.Issuer;
-            }
+                RetrieveMetadata();
+                _synclock.EnterReadLock();
+                try
+                {
+                    return _issuer;
+                }
+                finally
+                {
+                    _synclock.ExitReadLock();
+                }
+             }
         }
 
         /// <summary>
@@ -46,15 +61,32 @@ namespace TaskService.App_Start
         {
             get
             {
-                return RetrieveMetadata().Result.SigningTokens;
-            }
+                RetrieveMetadata();
+                _synclock.EnterReadLock();
+                try
+                {
+                    return _tokens;
+                }
+                finally
+                {
+                    _synclock.ExitReadLock();
+                }
+             }
         }
 
-        private async Task<OpenIdConnectConfiguration> RetrieveMetadata()
+        private void RetrieveMetadata()
         {
-            OpenIdConnectConfiguration config = await _configManager.GetConfigurationAsync();
-
-            return config;
+            _synclock.EnterWriteLock();
+            try
+            {
+                OpenIdConnectConfiguration config = Task.Run(_configManager.GetConfigurationAsync).Result;
+                _issuer = config.Issuer;
+                _tokens = config.SigningTokens;
+            }
+            finally
+            {
+                _synclock.ExitWriteLock();
+            }
         }
     }
 }
