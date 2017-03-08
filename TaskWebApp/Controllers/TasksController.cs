@@ -1,58 +1,53 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Microsoft.Identity.Client;
+using Newtonsoft.Json.Linq;
+
 using System;
 using System.Collections.Generic;
-using System.Configuration;
-using System.Globalization;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using System.Web;
 using System.Web.Mvc;
 
-namespace TaskService.Controllers
+namespace TaskWebApp.Controllers
 {
     [Authorize]
     public class TasksController : Controller
     {
-        private static string serviceUrl = ConfigurationManager.AppSettings["api:TaskServiceUrl"];
+
+        private String accessToken;
+        private String apiEndpoint = Startup.serviceUrl + "/api/tasks/";
 
         // GET: TodoList
         public async Task<ActionResult> Index()
         {
-            try { 
-
-                var bootstrapContext = ClaimsPrincipal.Current.Identities.First().BootstrapContext as System.IdentityModel.Tokens.BootstrapContext;
+            try
+            {
+                acquireToken(new string[] { "https://fabrikamb2c.onmicrosoft.com/tasks/read" });
 
                 HttpClient client = new HttpClient();
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, serviceUrl + "/api/tasks");
-
-                // Add the token acquired from ADAL to the request headers
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bootstrapContext.Token);
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, apiEndpoint);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken); // Add token in header
                 HttpResponseMessage response = await client.SendAsync(request);
 
-                if (response.IsSuccessStatusCode)
+                switch (response.StatusCode)
                 {
-                    String responseString = await response.Content.ReadAsStringAsync();
-                    JArray tasks = JArray.Parse(responseString);
-                    ViewBag.Tasks = tasks;
-                    return View();
+                    case HttpStatusCode.OK:
+                        String responseString = await response.Content.ReadAsStringAsync();
+                        JArray tasks = JArray.Parse(responseString);
+                        ViewBag.Tasks = tasks;
+                        return View();
+                    case HttpStatusCode.Unauthorized:
+                        return await errorAction("Please sign in again. " + response.ReasonPhrase);
+                    default:
+                        return await errorAction("Error. Status code = " + response.StatusCode);
                 }
-                else
-                {
-                    // If the call failed with access denied, show the user an error indicating they might need to sign-in again.
-                    if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-                    {
-                        return new RedirectResult("/Error?message=Error: " + response.ReasonPhrase + " You might need to sign in again.");
-                    }
-                }
-
-                return new RedirectResult("/Error?message=An Error Occurred Reading To Do List: " + response.StatusCode);
             }
             catch (Exception ex)
             {
-                return new RedirectResult("/Error?message=An Error Occurred Reading To Do List: " + ex.Message);
+                return await errorAction("Error reading to do list: " + ex.Message);
             }
         }
 
@@ -62,33 +57,30 @@ namespace TaskService.Controllers
         {
             try
             {
-                var bootstrapContext = ClaimsPrincipal.Current.Identities.First().BootstrapContext as System.IdentityModel.Tokens.BootstrapContext;
+                acquireToken(new string[] { "https://fabrikamb2c.onmicrosoft.com/tasks/read" });
+                var httpContent = new[] {new KeyValuePair<string, string>("Text", description)};
 
-                HttpContent content = new FormUrlEncodedContent(new[] { new KeyValuePair<string, string>("Text", description) });
                 HttpClient client = new HttpClient();
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, serviceUrl + "/api/tasks");
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bootstrapContext.Token);
+                HttpContent content = new FormUrlEncodedContent(httpContent);
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, apiEndpoint);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
                 request.Content = content;
                 HttpResponseMessage response = await client.SendAsync(request);
 
-                if (response.IsSuccessStatusCode)
+                switch (response.StatusCode)
                 {
-                    return new RedirectResult("/Tasks");
+                    case HttpStatusCode.OK:
+                    case HttpStatusCode.NoContent:
+                        return new RedirectResult("/Tasks");
+                    case HttpStatusCode.Unauthorized:
+                        return await errorAction("Please sign in again. " + response.ReasonPhrase);
+                    default:
+                        return await errorAction("Error. Status code = " + response.StatusCode);
                 }
-                else
-                {
-                    // If the call failed with access denied, show the user an error indicating they might need to sign-in again.
-                    if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-                    {
-                        return new RedirectResult("/Error?message=Error: " + response.ReasonPhrase + " You might need to sign in again.");
-                    }
-                }
-
-                return new RedirectResult("/Error?message=Error reading your To-Do List.");
             }
             catch (Exception ex)
             {
-                return new RedirectResult("/Error?message=Error reading your To-Do List.  " + ex.Message);
+                return await errorAction("Error writing to list: " + ex.Message);
             }
         }
 
@@ -98,33 +90,48 @@ namespace TaskService.Controllers
         {
             try
             {
-                var bootstrapContext = ClaimsPrincipal.Current.Identities.First().BootstrapContext as System.IdentityModel.Tokens.BootstrapContext;
+                acquireToken(new string[] { "https://fabrikamb2c.onmicrosoft.com/tasks/read" });
 
                 HttpClient client = new HttpClient();
-                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Delete, serviceUrl + "/api/tasks/" + id);
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bootstrapContext.Token);
+                HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Delete, apiEndpoint + id);
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken); // Add token in header
                 HttpResponseMessage response = await client.SendAsync(request);
 
-                if (response.IsSuccessStatusCode)
+                switch (response.StatusCode)
                 {
-                    return new RedirectResult("/Tasks");
+                    case HttpStatusCode.OK:
+                    case HttpStatusCode.NoContent:
+                        return new RedirectResult("/Tasks");
+                    case HttpStatusCode.Unauthorized:
+                        return await errorAction("Please sign in again. " + response.ReasonPhrase);
+                    default:
+                        return await errorAction("Error. Status code = " + response.StatusCode);
                 }
-                else
-                {
-                    // If the call failed with access denied, then drop the current access token from the cache, 
-                    // and show the user an error indicating they might need to sign-in again.
-                    if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
-                    {
-                        return new RedirectResult("/Error?message=Error: " + response.ReasonPhrase + " You might need to sign in again.");
-                    }
-                }
-
-                return new RedirectResult("/Error?message=Error deleting your To-Do Item.");
             }
             catch (Exception ex)
             {
-                return new RedirectResult("/Error?message=Error deleting your To-Do Item.  " + ex.Message);
+                return await errorAction("Error deleting from list: " + ex.Message);
             }
         }
+
+        private async void acquireToken(String[] scope)
+        {
+            string userObjectID = ClaimsPrincipal.Current.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier").Value;
+            string authority = String.Format(Startup.aadInstance, Startup.tenant, Startup.SignInPolicyId);
+
+            ClientCredential credential = new ClientCredential(Startup.clientSecret);
+
+            // Here you ask for a token using the web app's clientId as the scope, since the web app and service share the same clientId.
+            ConfidentialClientApplication app = new ConfidentialClientApplication(authority, Startup.clientId, Startup.redirectUri, credential, new NaiveSessionCache(userObjectID, this.HttpContext)) { };
+            AuthenticationResult result = await app.AcquireTokenSilentAsync(scope);
+
+            accessToken = result.Token;
+        }
+
+        private async Task<ActionResult> errorAction(String message)
+        {
+            return new RedirectResult("/Error?message=" + message);
+        }
+
     }
 }

@@ -1,21 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-
-// The following using statements were added for this sample
-using Owin;
-using Microsoft.Owin.Security;
+﻿using Microsoft.Owin.Security;
 using Microsoft.Owin.Security.Cookies;
 using Microsoft.Owin.Security.OpenIdConnect;
-using System.Threading.Tasks;
 using Microsoft.Owin.Security.Notifications;
+
+using Microsoft.Identity.Client;
 using Microsoft.IdentityModel.Protocols;
-using System.Web.Mvc;
+
+using Owin;
+
+using System;
 using System.Configuration;
-using System.Globalization;
-using System.Threading;
 using System.IdentityModel.Tokens;
+using System.Threading.Tasks;
+using System.Web;
 
 namespace TaskWebApp
 {
@@ -27,6 +24,7 @@ namespace TaskWebApp
         public static string aadInstance = ConfigurationManager.AppSettings["ida:AadInstance"];
         public static string tenant = ConfigurationManager.AppSettings["ida:Tenant"];
         public static string redirectUri = ConfigurationManager.AppSettings["ida:RedirectUri"];
+        public static string serviceUrl = ConfigurationManager.AppSettings["api:TaskServiceUrl"];
 
         // B2C policy identifiers
         public static string SignUpPolicyId = ConfigurationManager.AppSettings["ida:SignUpPolicyId"];
@@ -75,10 +73,10 @@ namespace TaskWebApp
                 PostLogoutRedirectUri = redirectUri,
                 Notifications = new OpenIdConnectAuthenticationNotifications
                 {
-                    AuthenticationFailed = OnAuthenticationFailed,
+                    AuthorizationCodeReceived = OnAuthorizationCodeReceived,
+                    AuthenticationFailed = OnAuthenticationFailed
                 },
-                Scope = "openid",
-                ResponseType = "id_token",
+                Scope = "openid https://fabrikamb2c.onmicrosoft.com/tasks/read",
 
                 TokenValidationParameters = new TokenValidationParameters
                 {
@@ -86,6 +84,24 @@ namespace TaskWebApp
                     SaveSigninToken = true,
                 },
             };
+        }
+
+        /*
+         * Callback function when an authorization code is received 
+         */
+        private async Task OnAuthorizationCodeReceived(AuthorizationCodeReceivedNotification notification)
+        {
+            // Extract the code from the response
+            var code = notification.Code;
+
+            string userObjectId = notification.AuthenticationTicket.Identity.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier").Value;
+            string authority = String.Format(aadInstance, tenant, SignInPolicyId);
+
+            ClientCredential cred = new ClientCredential(clientSecret);
+
+            // Here you ask for a token using the web app's clientId as the scope, since the web app and service share the same clientId.
+            ConfidentialClientApplication app = new ConfidentialClientApplication(authority, Startup.clientId, redirectUri, cred, new NaiveSessionCache(userObjectId, notification.OwinContext.Environment["System.Web.HttpContextBase"] as HttpContextBase)){};
+            var authResult = await app.AcquireTokenByAuthorizationCodeAsync(new string[] { "https://fabrikamb2c.onmicrosoft.com/tasks/read" }, code, SignInPolicyId);
         }
     }
 }

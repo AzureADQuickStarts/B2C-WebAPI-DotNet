@@ -6,9 +6,6 @@ using System.Web.Mvc;
 
 // The following using statements were added for this sample.
 using Microsoft.Owin.Security;
-using Microsoft.Owin.Security.OpenIdConnect;
-using Microsoft.Owin.Security.Cookies;
-using System.Globalization;
 
 namespace TaskWebApp.Controllers
 {

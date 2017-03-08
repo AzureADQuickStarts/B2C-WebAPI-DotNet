@@ -56,6 +56,14 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Microsoft.Experimental.IdentityModel.Clients.ActiveDirectory.4.0.209160138-alpha\lib\net45\Microsoft.Experimental.IdentityModel.Clients.ActiveDirectory.Platform.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.Identity.Client, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Identity.Client.1.0.304142221-alpha\lib\net45\Microsoft.Identity.Client.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.Identity.Client.Platform, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Identity.Client.1.0.304142221-alpha\lib\net45\Microsoft.Identity.Client.Platform.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Microsoft.IdentityModel.Protocol.Extensions, Version=1.0.2.33, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Microsoft.IdentityModel.Protocol.Extensions.1.0.2.206221351\lib\net45\Microsoft.IdentityModel.Protocol.Extensions.dll</HintPath>
@@ -158,6 +166,7 @@
     <Folder Include="Views\Account\" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="App_Start\NaiveSessionCache.cs" />
     <Compile Include="Controllers\ErrorController.cs" />
     <Compile Include="Controllers\TasksController.cs" />
     <Compile Include="Models\Task.cs" />

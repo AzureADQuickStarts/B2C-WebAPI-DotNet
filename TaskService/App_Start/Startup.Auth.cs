@@ -36,7 +36,7 @@ namespace TaskService
             {
                 // This is where you specify that your API only accepts tokens from its own clients
                 ValidAudience = clientId,
-                AuthenticationType = policy,
+                AuthenticationType = policy
             };
 
             return new OAuthBearerAuthenticationOptions
