@@ -5,6 +5,9 @@ using System.Web;
 
 namespace TaskWebApp
 {
+    /*
+     * This object is a naive representation of the token cache
+     */ 
     public class NaiveSessionCache : TokenCache
     {
         private static readonly object FileLock = new object();
@@ -23,6 +26,9 @@ namespace TaskWebApp
             Load();
         }
 
+        /*
+         * Load the cache from the persistent store
+         */
         public void Load()
         {
             lock (FileLock)
@@ -39,6 +45,9 @@ namespace TaskWebApp
             }
         }
 
+        /* 
+         * Write changes to the persistent store
+         */
         public void Persist()
         {
             lock (FileLock)
@@ -57,7 +66,7 @@ namespace TaskWebApp
             }
         }
 
-        // Empties the persistent store.
+        // Clear/empty the cache
         public override void Clear(String clientId)
         {
             base.Clear(clientId);

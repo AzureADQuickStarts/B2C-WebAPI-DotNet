@@ -12,33 +12,68 @@ namespace TaskService.Controllers
     public class TasksController : ApiController
     {
         // In this service we're using an in-memory list to store tasks, just to keep things simple.
-        // This means that all of your tasks will be lost each time you run the service
+        // All of your tasks will be lost each time you run the service
         private static List<Models.Task> db = new List<Models.Task>();
 
+        // OWIN auth middleware constants
+        public const string scopeElement = "http://schemas.microsoft.com/identity/claims/scope";
+        public const string objectIdElement = "http://schemas.microsoft.com/identity/claims/objectidentifier";
+
+        // API Scopes
+        public const string ReadPermission = "read";
+        public const string WritePermission = "write";
+
+        /*
+         * GET all tasks for user
+         */
         public IEnumerable<Models.Task> Get()
         {
-            string owner = ClaimsPrincipal.Current.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier").Value;
+            HasRequiredScopes(ReadPermission);
+            string owner = ClaimsPrincipal.Current.FindFirst(objectIdElement).Value;
             IEnumerable<Models.Task> userTasks = db.Where(t => t.Owner == owner);
             return userTasks;
         }
 
+        /*
+        * POST a new task for user
+        */
         public void Post(Models.Task task)
         {
-            if (task.Text == null || task.Text == string.Empty)
+            HasRequiredScopes(WritePermission);
+
+            if (String.IsNullOrEmpty(task.Text))
                 throw new WebException("Please provide a task description");
 
-            string owner = ClaimsPrincipal.Current.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier").Value;
+            string owner = ClaimsPrincipal.Current.FindFirst(objectIdElement).Value;
             task.Owner = owner;
             task.Completed = false;
             task.DateModified = DateTime.UtcNow;
             db.Add(task);
         }
 
+        /*
+         * DELETE a task for user
+         */
         public void Delete(int id)
         {
-            string owner = ClaimsPrincipal.Current.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier").Value;
+            HasRequiredScopes(WritePermission);
+
+            string owner = ClaimsPrincipal.Current.FindFirst(objectIdElement).Value;
             Models.Task task = db.Where(t => t.Owner.Equals(owner) && t.Id.Equals(id)).FirstOrDefault();
             db.Remove(task);
+        }
+
+        // Validate to ensure the necessary scopes are present.
+        private void HasRequiredScopes(String permission)
+        {
+            if (!ClaimsPrincipal.Current.FindFirst(scopeElement).Value.Contains(permission))
+            {
+                throw new HttpResponseException(new HttpResponseMessage
+                {
+                    StatusCode = HttpStatusCode.Unauthorized,
+                    ReasonPhrase = $"The Scope claim does not contain the {permission} permission."
+                });
+            }
         }
     }
 }

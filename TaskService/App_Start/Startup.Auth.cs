@@ -1,14 +1,9 @@
-﻿using Microsoft.Owin.Security.ActiveDirectory;
-using Microsoft.Owin.Security.Jwt;
+﻿using Microsoft.Owin.Security.Jwt;
 using Microsoft.Owin.Security.OAuth;
 using Owin;
 using System;
-using System.Collections.Generic;
 using System.Configuration;
 using System.IdentityModel.Tokens;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TaskService.App_Start;
 
 namespace TaskService
@@ -16,34 +11,29 @@ namespace TaskService
     public partial class Startup
     {
         // These values are pulled from web.config
-        public static string aadInstance = ConfigurationManager.AppSettings["ida:AadInstance"];
-        public static string tenant = ConfigurationManager.AppSettings["ida:Tenant"];
-        public static string clientId = ConfigurationManager.AppSettings["ida:ClientId"];
-        public static string signUpPolicy = ConfigurationManager.AppSettings["ida:SignUpPolicyId"];
-        public static string signInPolicy = ConfigurationManager.AppSettings["ida:SignInPolicyId"];
-        public static string editProfilePolicy = ConfigurationManager.AppSettings["ida:UserProfilePolicyId"];
+        public static string AadInstance = ConfigurationManager.AppSettings["ida:AadInstance"];
+        public static string Tenant = ConfigurationManager.AppSettings["ida:Tenant"];
+        public static string ClientId = ConfigurationManager.AppSettings["ida:ClientId"];
+        public static string SignUpSignInPolicy = ConfigurationManager.AppSettings["ida:SignUpSignInPolicyId"];
+        public static string DefaultPolicy = SignUpSignInPolicy;
 
+        /*
+         * Initiate the authorization OWIN middleware 
+         */
         public void ConfigureAuth(IAppBuilder app)
-        {   
-            app.UseOAuthBearerAuthentication(CreateBearerOptionsFromPolicy(signUpPolicy));
-            app.UseOAuthBearerAuthentication(CreateBearerOptionsFromPolicy(signInPolicy));
-            app.UseOAuthBearerAuthentication(CreateBearerOptionsFromPolicy(editProfilePolicy));
-        }
-
-        public OAuthBearerAuthenticationOptions CreateBearerOptionsFromPolicy(string policy)
         {
             TokenValidationParameters tvps = new TokenValidationParameters
             {
-                // This is where you specify that your API only accepts tokens from its own clients
-                ValidAudience = clientId,
-                AuthenticationType = policy
+                // Accept only those tokens where the audience of the token is equal to the client ID of this app
+                ValidAudience = ClientId,
+                AuthenticationType = Startup.DefaultPolicy
             };
 
-            return new OAuthBearerAuthenticationOptions
+            app.UseOAuthBearerAuthentication(new OAuthBearerAuthenticationOptions
             {
                 // This SecurityTokenProvider fetches the Azure AD B2C metadata & signing keys from the OpenIDConnect metadata endpoint
-                AccessTokenFormat = new JwtFormat(tvps, new OpenIdConnectCachingSecurityTokenProvider(String.Format(aadInstance, tenant, policy))),
-            };
+                AccessTokenFormat = new JwtFormat(tvps, new OpenIdConnectCachingSecurityTokenProvider(String.Format(AadInstance, Tenant, DefaultPolicy)))
+            });
         }
     }
 }

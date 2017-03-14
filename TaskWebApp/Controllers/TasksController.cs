@@ -18,20 +18,24 @@ namespace TaskWebApp.Controllers
     {
 
         private String accessToken;
-        private String apiEndpoint = Startup.serviceUrl + "/api/tasks/";
+        private String apiEndpoint = Startup.ServiceUrl + "/api/tasks/";
 
-        // GET: TodoList
+        // GET: Makes a call to the API and retrieves the list of tasks
         public async Task<ActionResult> Index()
         {
             try
             {
-                acquireToken(new string[] { "https://fabrikamb2c.onmicrosoft.com/tasks/read" });
+                // Retrieve the token with the specified scopes
+                acquireToken(new string[] { Startup.ReadTasksScope });
 
                 HttpClient client = new HttpClient();
                 HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, apiEndpoint);
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken); // Add token in header
+
+                // Add token to the Authorization header and make the request
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
                 HttpResponseMessage response = await client.SendAsync(request);
 
+                // Handle the response
                 switch (response.StatusCode)
                 {
                     case HttpStatusCode.OK:
@@ -51,15 +55,19 @@ namespace TaskWebApp.Controllers
             }
         }
 
-        // POST: TodoList/Create
+        // POST: Makes a call to the API to store a new task
         [HttpPost]
         public async Task<ActionResult> Create(string description)
         {
             try
             {
-                acquireToken(new string[] { "https://fabrikamb2c.onmicrosoft.com/tasks/read" });
+                // Retrieve the token with the specified scopes
+                acquireToken(new string[] { Startup.WriteTasksScope });
+
+                // Set the content
                 var httpContent = new[] {new KeyValuePair<string, string>("Text", description)};
 
+                // Create the request
                 HttpClient client = new HttpClient();
                 HttpContent content = new FormUrlEncodedContent(httpContent);
                 HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, apiEndpoint);
@@ -67,6 +75,7 @@ namespace TaskWebApp.Controllers
                 request.Content = content;
                 HttpResponseMessage response = await client.SendAsync(request);
 
+                // Handle the response
                 switch (response.StatusCode)
                 {
                     case HttpStatusCode.OK:
@@ -84,19 +93,23 @@ namespace TaskWebApp.Controllers
             }
         }
 
-        // POST: /TodoList/Delete
+        // DELETE: Makes a call to the API to delete an existing task
         [HttpPost]
         public async Task<ActionResult> Delete(string id)
         {
             try
             {
-                acquireToken(new string[] { "https://fabrikamb2c.onmicrosoft.com/tasks/read" });
+                // Retrieve the token with the specified scopes
+                acquireToken(new string[] { Startup.WriteTasksScope });
 
                 HttpClient client = new HttpClient();
                 HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Delete, apiEndpoint + id);
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken); // Add token in header
+
+                // Add token to the Authorization header and send the request
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken); 
                 HttpResponseMessage response = await client.SendAsync(request);
 
+                // Handle the response
                 switch (response.StatusCode)
                 {
                     case HttpStatusCode.OK:
@@ -114,20 +127,28 @@ namespace TaskWebApp.Controllers
             }
         }
 
+        /*
+         * Uses MSAL to retrieve the token from the cache or Azure AD B2C
+         */
         private async void acquireToken(String[] scope)
         {
-            string userObjectID = ClaimsPrincipal.Current.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier").Value;
-            string authority = String.Format(Startup.aadInstance, Startup.tenant, Startup.SignInPolicyId);
+            string userObjectID = ClaimsPrincipal.Current.FindFirst(Startup.ObjectIdElement).Value;
+            string authority = String.Format(Startup.AadInstance, Startup.Tenant, Startup.DefaultPolicy);
 
-            ClientCredential credential = new ClientCredential(Startup.clientSecret);
+            ClientCredential credential = new ClientCredential(Startup.ClientSecret);
 
-            // Here you ask for a token using the web app's clientId as the scope, since the web app and service share the same clientId.
-            ConfidentialClientApplication app = new ConfidentialClientApplication(authority, Startup.clientId, Startup.redirectUri, credential, new NaiveSessionCache(userObjectID, this.HttpContext)) { };
+            // Retrieve the token using the provided scopes
+            ConfidentialClientApplication app = new ConfidentialClientApplication(authority, Startup.ClientId, 
+                                                Startup.RedirectUri, credential, 
+                                                new NaiveSessionCache(userObjectID, this.HttpContext));
             AuthenticationResult result = await app.AcquireTokenSilentAsync(scope);
 
             accessToken = result.Token;
         }
 
+        /*
+         * Helper function for returning an error message
+         */
         private async Task<ActionResult> errorAction(String message)
         {
             return new RedirectResult("/Error?message=" + message);

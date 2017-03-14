@@ -1,46 +1,43 @@
-﻿using System;
+﻿using Microsoft.Owin.Security;
+
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
 
-// The following using statements were added for this sample.
-using Microsoft.Owin.Security;
-
 namespace TaskWebApp.Controllers
 {
     public class AccountController : Controller
     {
-        public void SignIn()
+        /*
+         *  Called when requesting to sign up or sign in
+         */
+        public void SignUpSignIn()
         {
+            // Use the default policy to process the sign up / sign in flow
             if (!Request.IsAuthenticated)
             {
-                // To execute a policy, you simply need to trigger an OWIN challenge.
-                // You can indicate which policy to use by specifying the policy id as the AuthenticationType
-                HttpContext.GetOwinContext().Authentication.Challenge(Startup.SignInPolicyId);
+                HttpContext.GetOwinContext().Authentication.Challenge();
                 return;
             }
 
             Response.Redirect("/");
         }
-        public void SignUp()
-        {
-            if (!Request.IsAuthenticated)
-            {
-                HttpContext.GetOwinContext().Authentication.Challenge(Startup.SignUpPolicyId);
-                return;
-            }
 
-            Response.Redirect("/");
-
-        }
-
-
-        public void Profile()
+        /*
+         *  Called when requesting to edit a profile
+         */
+        public void EditProfile()
         {
             if (Request.IsAuthenticated)
             {
-                HttpContext.GetOwinContext().Authentication.Challenge(Startup.ProfilePolicyId);
+                // Let the middleware know you are trying to use the edit profile policy (see OnRedirectToIdentityProvider in Startup.Auth.cs)
+                HttpContext.GetOwinContext().Set("Policy", Startup.EditProfilePolicyId);
+
+                // Set the page to redirect to after editing the profile
+                var authenticationProperties = new AuthenticationProperties { RedirectUri = "/" };
+                HttpContext.GetOwinContext().Authentication.Challenge(authenticationProperties);
+
                 return;
             }
 
@@ -48,6 +45,28 @@ namespace TaskWebApp.Controllers
 
         }
 
+        /*
+         *  Called when requesting to reset a password (after logging in)
+         */
+        public void ResetPassword()
+        {
+            if (Request.IsAuthenticated)
+            {
+                // Let the middleware know you are trying to use the reset password policy (see OnRedirectToIdentityProvider in Startup.Auth.cs)
+                HttpContext.GetOwinContext().Set("Policy", Startup.ResetPasswordPolicyId);
+
+                // Set the page to redirect to after changing passwords
+                var authenticationProperties = new AuthenticationProperties { RedirectUri = "/" };
+                HttpContext.GetOwinContext().Authentication.Challenge(authenticationProperties);
+
+                return;
+            }
+            Response.Redirect("/");
+        }
+
+        /*
+         *  Called when requesting to sign out
+         */
         public void SignOut()
         {
             // To sign out the user, you should issue an OpenIDConnect sign out request.
