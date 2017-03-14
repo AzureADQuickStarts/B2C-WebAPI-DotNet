@@ -97,13 +97,20 @@ namespace TaskWebApp
         }
 
         /*
-         * Catch any failures thrown by the authentication middleware and handle appropriately
+         * Catch any failures received by the authentication middleware and handle appropriately
          */
         private Task OnAuthenticationFailed(AuthenticationFailedNotification<OpenIdConnectMessage, OpenIdConnectAuthenticationOptions> notification)
         {
             notification.HandleResponse();
 
-            if (notification.Exception.Message == "access_denied")
+            // Handle the error code that Azure AD B2C throws when trying to reset a password from the login page 
+            // because password reset is not supported by a "sign-up or sign-in policy"
+            if (notification.ProtocolMessage.ErrorDescription != null && notification.ProtocolMessage.ErrorDescription.Contains("AADB2C90118"))
+            {
+                // If the user clicked the reset password link, redirect to the reset password route
+                notification.Response.Redirect("/Account/ResetPassword");
+            }
+            else if (notification.Exception.Message == "access_denied")
             {
                 notification.Response.Redirect("/");
             }

@@ -50,18 +50,14 @@ namespace TaskWebApp.Controllers
          */
         public void ResetPassword()
         {
-            if (Request.IsAuthenticated)
-            {
-                // Let the middleware know you are trying to use the reset password policy (see OnRedirectToIdentityProvider in Startup.Auth.cs)
-                HttpContext.GetOwinContext().Set("Policy", Startup.ResetPasswordPolicyId);
+            // Let the middleware know you are trying to use the reset password policy (see OnRedirectToIdentityProvider in Startup.Auth.cs)
+            HttpContext.GetOwinContext().Set("Policy", Startup.ResetPasswordPolicyId);
 
-                // Set the page to redirect to after changing passwords
-                var authenticationProperties = new AuthenticationProperties { RedirectUri = "/" };
-                HttpContext.GetOwinContext().Authentication.Challenge(authenticationProperties);
+            // Set the page to redirect to after changing passwords
+            var authenticationProperties = new AuthenticationProperties { RedirectUri = "/" };
+            HttpContext.GetOwinContext().Authentication.Challenge(authenticationProperties);
 
-                return;
-            }
-            Response.Redirect("/");
+            return;
         }
 
         /*
